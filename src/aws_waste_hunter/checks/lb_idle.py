@@ -15,10 +15,10 @@ from aws_waste_hunter.models import Finding
 from aws_waste_hunter.pricing import HOURS_PER_MONTH, PriceBook
 from aws_waste_hunter.readonly import client
 
-# type -> (namespace, metric that is non-zero whenever the balancer carries traffic)
+# type -> (namespace, metric). ProcessedBytes counts all traffic (incl. fixed-response rules).
 _TRAFFIC_METRIC = {
-    "application": ("AWS/ApplicationELB", "RequestCount"),
-    "network": ("AWS/NetworkELB", "NewFlowCount"),
+    "application": ("AWS/ApplicationELB", "ProcessedBytes"),
+    "network": ("AWS/NetworkELB", "ProcessedBytes"),
 }
 
 
