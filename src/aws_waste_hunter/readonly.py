@@ -21,6 +21,9 @@ from aws_waste_hunter.regions import validate_region
 
 # CamelCase botocore operation names (e.g. "DescribeVolumes"). Deliberately tiny.
 ALLOWED_OPERATION_PREFIXES: tuple[str, ...] = ("Describe", "List", "Get")
+# The only non-read operation: obtaining short-lived credentials for a cross-account scan role.
+# It changes nothing in any account. Matched by exact name, never by prefix.
+ALLOWED_OPERATIONS_EXACT: frozenset[str] = frozenset({"AssumeRole"})
 
 
 class ReadOnlyViolation(RuntimeError):  # noqa: N818 - public name reads better
@@ -29,7 +32,10 @@ class ReadOnlyViolation(RuntimeError):  # noqa: N818 - public name reads better
 
 def is_read_only_operation(operation_name: str) -> bool:
     """Return True if a botocore operation name is on the read-only allowlist."""
-    return operation_name.startswith(ALLOWED_OPERATION_PREFIXES)
+    return (
+        operation_name.startswith(ALLOWED_OPERATION_PREFIXES)
+        or operation_name in ALLOWED_OPERATIONS_EXACT
+    )
 
 
 def _guard(model: Any, **_: Any) -> None:

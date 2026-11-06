@@ -3,7 +3,7 @@
 Read-only, auditable AWS waste scanner that tells you **how many dollars** you can save.
 Built by [Helyx IT](https://helyxit.com).
 
-> **Status:** pre-alpha (slice 2). Multi-region scans, live pricing, four checks.
+> **Status:** pre-alpha (slice 2b). Parallel multi-region and cross-account scans, live pricing, four checks.
 
 ## Why this one
 - **It can't change your account.** Every AWS call is `Describe*`, `List*` or `Get*`, enforced
@@ -22,7 +22,16 @@ aws-waste-hunter scan --region us-east-1 --profile my-sso-profile
 aws-waste-hunter scan --regions us-east-1,eu-west-1 --format json --output report.json
 aws-waste-hunter scan --all-regions
 aws-waste-hunter scan --region us-east-1 --pricing offline   # no Price List calls
+aws-waste-hunter scan --all-regions --concurrency 12         # parallel (default 8, max 16)
+
+# Other accounts: assume a read-only role in each (repeat --role-arn for more accounts)
+aws-waste-hunter scan --all-regions \
+  --role-arn arn:aws:iam::222222222222:role/aws-waste-hunter-scanner \
+  --external-id "$WASTE_HUNTER_EXTERNAL_ID"
 ```
+Create the cross-account role with the Terraform module in
+[`terraform/scanner-role`](terraform/scanner-role): trust is limited to the principals you list
+and requires an ExternalId; permissions are exactly [`iam/policy.json`](iam/policy.json).
 Attach [`iam/policy.json`](iam/policy.json) to the role you scan with. Reports are written
 with `0600` permissions because they describe your account.
 
@@ -51,6 +60,8 @@ a bad parse or a tampered cache cannot inflate your numbers. Amounts are estimat
   retries, validated region); a test fails if any other code creates a raw client.
 - Region names are validated before they reach endpoints or file paths.
 - Resource names and tags are treated as untrusted input when rendering reports.
+- Cross-account scans use short-lived (1h) assumed-role credentials that stay in memory; the
+  only non-read operation allowed through the guard is the exact `sts:AssumeRole`.
 - Standard AWS credential chain / SSO only. Credentials are never stored, logged or sent.
 - GitHub Actions are pinned to commit SHAs.
 
@@ -65,8 +76,8 @@ program. These features are on the roadmap and are **not available yet**; the or
 the rough build order.
 
 ### Find more, across everything
-- **Org-wide scans.** One command across every account and region in your AWS Organization,
-  using short-lived, read-only cross-account roles with ExternalId.
+- **Org-wide scans.** Cross-account scanning works today with `--role-arn`; Pro adds automatic
+  discovery of every account in your AWS Organization.
 - **Metric-based idle detection.** Idle EC2 and RDS, NAT gateways moving no data, load
   balancers with no traffic. The waste that metadata alone can't show, with a hard cost cap
   so the scan itself never surprises you.

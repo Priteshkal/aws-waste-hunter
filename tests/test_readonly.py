@@ -23,13 +23,25 @@ POLICY = ROOT / "iam" / "policy.json"
 SRC = ROOT / "src" / "aws_waste_hunter"
 
 
-@pytest.mark.parametrize("op", ["DescribeVolumes", "ListBuckets", "GetProducts"])
+@pytest.mark.parametrize("op", ["DescribeVolumes", "ListBuckets", "GetProducts", "AssumeRole"])
 def test_allows_read_operations(op: str) -> None:
     assert is_read_only_operation(op)
 
 
 @pytest.mark.parametrize(
-    "op", ["DeleteVolume", "TerminateInstances", "PutObject", "CreateSnapshot", "ModifyVolume", ""]
+    "op",
+    [
+        "DeleteVolume",
+        "TerminateInstances",
+        "PutObject",
+        "CreateSnapshot",
+        "ModifyVolume",
+        "",
+        "AssumeRoleWithWebIdentity",
+        "AssumeRoleWithSAML",
+        "AssumeRoleX",
+        "Assume",
+    ],
 )
 def test_blocks_write_operations(op: str) -> None:
     assert not is_read_only_operation(op)

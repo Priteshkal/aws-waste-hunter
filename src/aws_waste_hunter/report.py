@@ -19,6 +19,7 @@ FOOTER = (
 
 def to_json(summary: ScanSummary) -> str:
     payload = {
+        "accounts": summary.accounts,
         "regions": summary.regions,
         "pricing_sources": {r.region: r.pricing_source for r in summary.results},
         "total_estimated_monthly_savings_usd": summary.total_savings_usd,
@@ -37,6 +38,7 @@ def to_markdown(summary: ScanSummary) -> str:
     lines = [
         f"# AWS waste report - {', '.join(summary.regions)}",
         "",
+        *([f"Accounts: {', '.join(summary.accounts)}", ""] if len(summary.accounts) > 1 else []),
         f"**Estimated monthly savings: ${summary.total_savings_usd:,.2f}** "
         "(estimates, not a quote)",
         "",
@@ -46,21 +48,24 @@ def to_markdown(summary: ScanSummary) -> str:
     findings = summary.findings
     if findings:
         lines += [
-            "| Region | Check | Resource | Reason | Cost/mo | Savings/mo | Confidence |",
-            "|---|---|---|---|---:|---:|---|",
+            "| Account | Region | Check | Resource | Reason | Cost/mo | Savings/mo | Confidence |",
+            "|---|---|---|---|---|---:|---:|---|",
         ]
         for f in findings:
             est = f.estimated_savings_usd
             savings = "n/a" if est is None else f"${est:,.2f}"
             lines.append(
-                f"| {f.region} | {f.check_id} | `{_md_cell(f.resource_id)}` | "
+                f"| {f.account_id} | {f.region} | {f.check_id} | `{_md_cell(f.resource_id)}` | "
                 f"{_md_cell(f.reason)} | ${f.monthly_cost_usd:,.2f} | {savings} | {f.confidence} |"
             )
     else:
         lines.append("No waste found by the enabled checks.")
     if summary.errors:
         lines += ["", "## Checks that could not run", ""]
-        lines += [f"- `{e.check_id}` ({e.region}): {_md_cell(e.message)}" for e in summary.errors]
+        lines += [
+            f"- `{e.check_id}` ({e.account_id} {e.region}): {_md_cell(e.message)}"
+            for e in summary.errors
+        ]
     lines += ["", FOOTER]
     return "\n".join(lines)
 
