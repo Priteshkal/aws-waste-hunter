@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" role="img" aria-label="aws-waste-hunter: read-only AWS waste scanner">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/><stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="280" rx="18" fill="url(#bg)"/>
+  <g transform="translate(110 140)">
+    <circle r="72" fill="none" stroke="url(#acc)" stroke-width="10"/>
+    <line x1="52" y1="52" x2="104" y2="104" stroke="url(#acc)" stroke-width="14" stroke-linecap="round"/>
+    <text x="0" y="26" font-family="Helvetica, Arial, sans-serif" font-size="80" font-weight="700" text-anchor="middle" fill="#f8fafc">$</text>
+  </g>
+  <text x="260" y="128" font-family="Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#f8fafc">aws-waste-hunter</text>
+  <text x="262" y="182" font-family="Helvetica, Arial, sans-serif" font-size="30" fill="#cbd5e1">Read-only AWS waste scanner that speaks dollars</text>
+  <g font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#0f172a" font-weight="600">
+    <rect x="262" y="206" width="170" height="38" rx="19" fill="#22c55e"/><text x="347" y="232" text-anchor="middle">Describe · List · Get</text>
+    <rect x="446" y="206" width="150" height="38" rx="19" fill="#38bdf8"/><text x="521" y="232" text-anchor="middle">No telemetry</text>
+    <rect x="610" y="206" width="150" height="38" rx="19" fill="#facc15"/><text x="685" y="232" text-anchor="middle">Apache-2.0</text>
+  </g>
+</svg>
