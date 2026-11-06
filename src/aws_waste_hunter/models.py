@@ -42,3 +42,27 @@ class ScanResult:
     @property
     def total_savings_usd(self) -> float:
         return round(sum(f.estimated_savings_usd or 0.0 for f in self.findings), 2)
+
+
+@dataclass
+class ScanSummary:
+    """Results of scanning one or more regions."""
+
+    results: list[ScanResult] = field(default_factory=list)
+
+    @property
+    def regions(self) -> list[str]:
+        return [r.region for r in self.results]
+
+    @property
+    def findings(self) -> list[Finding]:
+        merged = [f for r in self.results for f in r.findings]
+        return sorted(merged, key=lambda f: f.estimated_savings_usd or 0.0, reverse=True)
+
+    @property
+    def errors(self) -> list[CheckError]:
+        return [e for r in self.results for e in r.errors]
+
+    @property
+    def total_savings_usd(self) -> float:
+        return round(sum(r.total_savings_usd for r in self.results), 2)

@@ -15,6 +15,9 @@ from __future__ import annotations
 from typing import Any
 
 import boto3
+from botocore.config import Config
+
+from aws_waste_hunter.regions import validate_region
 
 # CamelCase botocore operation names (e.g. "DescribeVolumes"). Deliberately tiny.
 ALLOWED_OPERATION_PREFIXES: tuple[str, ...] = ("Describe", "List", "Get")
@@ -46,3 +49,16 @@ def make_session(**kwargs: Any) -> boto3.session.Session:
     session = boto3.session.Session(**kwargs)
     session.events.register("before-call.*.*", _guard)
     return session
+
+
+# Bounded timeouts and retries so a hung or throttled endpoint cannot stall or hammer AWS.
+CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=30,
+    retries={"max_attempts": 5, "mode": "standard"},
+)
+
+
+def client(session: Any, service: str, region: str) -> Any:
+    """The only way checks should create AWS clients: validated region, bounded timeouts."""
+    return session.client(service, region_name=validate_region(region), config=CLIENT_CONFIG)

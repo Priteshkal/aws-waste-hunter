@@ -11,7 +11,7 @@ from moto import mock_aws
 
 from aws_waste_hunter import cli, report
 from aws_waste_hunter.checks import all_checks
-from aws_waste_hunter.models import Finding, ScanResult
+from aws_waste_hunter.models import Finding, ScanResult, ScanSummary
 from aws_waste_hunter.pricing import PriceBook
 from aws_waste_hunter.readonly import make_session
 from aws_waste_hunter.runner import run_scan
@@ -55,10 +55,10 @@ def test_scan_end_to_end_sorted_by_savings() -> None:
     assert result.total_savings_usd == pytest.approx(80.0 + 0.8 + 3.65)
 
 
-def _result_with(resource: str) -> ScanResult:
+def _result_with(resource: str) -> ScanSummary:
     r = ScanResult(region="us-east-1", pricing_source="test")
     r.findings.append(Finding("c", resource, "us-east-1", "why", "do", 1.0, None, "low"))
-    return r
+    return ScanSummary(results=[r])
 
 
 def test_json_report_roundtrips() -> None:
@@ -77,6 +77,31 @@ def test_markdown_escapes_untrusted_names() -> None:
 @mock_aws
 def test_cli_writes_report_and_exit_code(tmp_path: Path) -> None:
     out = tmp_path / "r.json"
-    code = cli.main(["scan", "--region", "us-east-1", "--format", "json", "--output", str(out)])
+    argv = ["scan", "--region", "us-east-1", "--pricing", "offline", "--format", "json"]
+    code = cli.main([*argv, "--output", str(out)])
     assert code == 0
-    assert json.loads(out.read_text())["region"] == "us-east-1"
+    assert json.loads(out.read_text())["regions"] == ["us-east-1"]
+    assert (out.stat().st_mode & 0o777) == 0o600  # reports describe your account
+
+
+@mock_aws
+def test_cli_multiple_regions_and_all_regions(tmp_path: Path) -> None:
+    out = tmp_path / "r.json"
+    base = ["scan", "--pricing", "offline", "--format", "json", "--output", str(out)]
+    assert cli.main([*base, "--regions", "us-east-1,eu-west-1,us-east-1"]) == 0
+    assert json.loads(out.read_text())["regions"] == ["us-east-1", "eu-west-1"]
+    assert cli.main([*base, "--all-regions"]) == 0
+    assert "us-east-1" in json.loads(out.read_text())["regions"]
+
+
+@pytest.mark.parametrize("bad", ["us-east-1/../x", "evil.com#", "", "US-EAST-1", "us-east"])
+def test_cli_rejects_invalid_region(bad: str) -> None:
+    with pytest.raises(SystemExit):
+        cli.main(["scan", "--region", bad])
+
+
+def test_cli_requires_exactly_one_region_option() -> None:
+    with pytest.raises(SystemExit):
+        cli.main(["scan"])
+    with pytest.raises(SystemExit):
+        cli.main(["scan", "--region", "us-east-1", "--all-regions"])
