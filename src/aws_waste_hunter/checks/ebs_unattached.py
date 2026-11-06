@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from aws_waste_hunter.metrics import MetricBudget
 from aws_waste_hunter.models import Finding
 from aws_waste_hunter.pricing import PriceBook
 from aws_waste_hunter.readonly import client
@@ -13,7 +14,13 @@ class UnattachedEbsVolumes:
     id: ClassVar[str] = "ebs-unattached"
     required_actions: ClassVar[tuple[str, ...]] = ("ec2:DescribeVolumes",)
 
-    def run(self, session: Any, region: str, prices: PriceBook) -> list[Finding]:
+    def run(
+        self,
+        session: Any,
+        region: str,
+        prices: PriceBook,
+        budget: MetricBudget | None = None,
+    ) -> list[Finding]:
         ec2 = client(session, "ec2", region)
         findings: list[Finding] = []
         pages = ec2.get_paginator("describe_volumes").paginate(

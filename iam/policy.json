@@ -22,6 +22,7 @@
         "ecr:DescribeRepositories",
         "ecr:DescribeImages",
         "ecr:GetLifecyclePolicy",
+        "cloudwatch:GetMetricData",
         "pricing:GetProducts",
         "sts:GetCallerIdentity"
       ],

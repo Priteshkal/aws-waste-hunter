@@ -18,6 +18,7 @@ from aws_waste_hunter.accounts import (
     validate_external_id,
     validate_role_arn,
 )
+from aws_waste_hunter.metrics import DEFAULT_MAX_METRICS
 from aws_waste_hunter.pricing import load_prices
 from aws_waste_hunter.readonly import make_session
 from aws_waste_hunter.regions import parse_region_list, validate_region
@@ -28,6 +29,13 @@ def _concurrency(value: str) -> int:
     n = int(value)
     if not 1 <= n <= MAX_CONCURRENCY:
         raise argparse.ArgumentTypeError(f"must be between 1 and {MAX_CONCURRENCY}")
+    return n
+
+
+def _max_metrics(value: str) -> int:
+    n = int(value)
+    if not 0 <= n <= 5000:
+        raise argparse.ArgumentTypeError("must be between 0 and 5000")
     return n
 
 
@@ -62,6 +70,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=_concurrency,
         default=DEFAULT_CONCURRENCY,
         help=f"Parallel scans, 1-{MAX_CONCURRENCY} (default {DEFAULT_CONCURRENCY})",
+    )
+    scan.add_argument(
+        "--max-metrics",
+        type=_max_metrics,
+        default=DEFAULT_MAX_METRICS,
+        help=(
+            "CloudWatch metric queries allowed per account+region (default "
+            f"{DEFAULT_MAX_METRICS}, about $0.002). Hard cost cap for metric-based checks."
+        ),
     )
     return parser
 
@@ -110,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
         targets,
         lambda session, region: load_prices(session, region, args.pricing),
         concurrency=args.concurrency,
+        max_metrics=args.max_metrics,
     )
     text = report.to_json(summary) if args.format == "json" else report.to_markdown(summary)
     if args.output:

@@ -3,7 +3,7 @@
 Read-only, auditable AWS waste scanner that tells you **how many dollars** you can save.
 Built by [Helyx IT](https://helyxit.com).
 
-> **Status:** pre-alpha (slice 2b). Parallel multi-region and cross-account scans, live pricing, four checks.
+> **Status:** pre-alpha (slice 3). Parallel multi-region and cross-account scans, live pricing, six checks including metric-based idle detection with a hard cost cap.
 
 ## Why this one
 - **It can't change your account.** Every AWS call is `Describe*`, `List*` or `Get*`, enforced
@@ -22,6 +22,7 @@ aws-waste-hunter scan --region us-east-1 --profile my-sso-profile
 aws-waste-hunter scan --regions us-east-1,eu-west-1 --format json --output report.json
 aws-waste-hunter scan --all-regions
 aws-waste-hunter scan --region us-east-1 --pricing offline   # no Price List calls
+aws-waste-hunter scan --region us-east-1 --max-metrics 50    # tighter CloudWatch cost cap
 aws-waste-hunter scan --all-regions --concurrency 12         # parallel (default 8, max 16)
 
 # Other accounts: assume a read-only role in each (repeat --role-arn for more accounts)
@@ -42,6 +43,13 @@ with `0600` permissions because they describe your account.
 | `ebs-gp2-to-gp3` | in-use gp2 volumes that could be gp3 (~20% cheaper) |
 | `eip-unassociated` | Elastic IPs allocated but not associated |
 | `logs-no-retention` | CloudWatch log groups that never expire |
+| `nat-idle` | NAT gateways (older than 7 days) that moved 0 bytes in the last 7 days |
+| `lb-idle` | Application/Network load balancers (older than 7 days) with no traffic in 7 days |
+
+`nat-idle` and `lb-idle` read CloudWatch (`GetMetricData`, billed ~$0.01 per 1,000 metrics).
+Every query is charged against a budget first: `--max-metrics` (default 200 per account and
+region, about $0.002). If the cap is reached the check stops, keeps what it found, and reports
+the error. Their dollar figures use us-east-1 list prices, so treat them as estimates.
 
 A check that fails (for example a missing permission) is listed in the report and the exit
 code is 1. It is never silently skipped.
@@ -78,8 +86,8 @@ the rough build order.
 ### Find more, across everything
 - **Org-wide scans.** Cross-account scanning works today with `--role-arn`; Pro adds automatic
   discovery of every account in your AWS Organization.
-- **Metric-based idle detection.** Idle EC2 and RDS, NAT gateways moving no data, load
-  balancers with no traffic. The waste that metadata alone can't show, with a hard cost cap
+- **More metric-based idle detection.** Idle EC2 and RDS (NAT gateways and load balancers
+  are already in the open-source scanner). The waste that metadata alone can't show, with a hard cost cap
   so the scan itself never surprises you.
 - **EKS right-sizing.** Requests vs real usage from Datadog or Prometheus, plus the
   autoscaler blockers that keep nodes alive. The same playbook behind a 70%+ node reduction.

@@ -37,7 +37,9 @@ class _BarrierCheck:
     required_actions: ClassVar[tuple[str, ...]] = ()
     barrier = threading.Barrier(4, timeout=10)
 
-    def run(self, session: Any, region: str, prices: PriceBook) -> list[Finding]:
+    def run(
+        self, session: Any, region: str, prices: PriceBook, budget: Any = None
+    ) -> list[Finding]:
         self.barrier.wait()
         return [Finding("barrier", f"r-{region}", region, "x", "y", 1.0, 1.0, "high")]
 
@@ -46,7 +48,9 @@ class _OneFinding:
     id: ClassVar[str] = "one"
     required_actions: ClassVar[tuple[str, ...]] = ()
 
-    def run(self, session: Any, region: str, prices: PriceBook) -> list[Finding]:
+    def run(
+        self, session: Any, region: str, prices: PriceBook, budget: Any = None
+    ) -> list[Finding]:
         return [Finding("one", f"r-{region}", region, "x", "y", 1.0, 1.0, "high")]
 
 
