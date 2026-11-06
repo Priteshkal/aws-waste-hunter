@@ -14,6 +14,15 @@ Built by [Helyx IT](https://helyxit.com).
 - **It speaks dollars.** Every finding has a monthly cost and a savings estimate, priced from
   the live AWS Price List API.
 
+## Install
+```bash
+pipx install aws-waste-hunter        # after the first PyPI release
+docker build -t aws-waste-hunter . && docker run --rm -v ~/.aws:/home/scanner/.aws:ro \
+  aws-waste-hunter scan --region us-east-1 --profile my-sso-profile
+pip install --require-hashes --no-deps -r requirements.lock && pip install --no-deps .   # from source, hash-pinned
+```
+See a [sample report](docs/sample-report.md) (fictional data).
+
 ## Usage
 ```bash
 pip install -e .
