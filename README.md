@@ -3,7 +3,26 @@
 Read-only, auditable AWS waste scanner that estimates the dollars you could save.
 Built by [Helyx IT](https://helyxit.com).
 
-> **Status:** pre-alpha (slice 0: security foundations). No scanning checks yet.
+> **Status:** pre-alpha (slice 1). One region per scan, four checks.
+
+## Usage
+```bash
+pip install -e .
+aws-waste-hunter scan --region us-east-1 --profile my-sso-profile --format md
+```
+Attach the policy in [`iam/policy.json`](iam/policy.json) to the role you scan with.
+
+## Checks
+| ID | Finds |
+|---|---|
+| `ebs-unattached` | EBS volumes not attached to anything |
+| `ebs-gp2-to-gp3` | in-use gp2 volumes that could be gp3 (~20% cheaper) |
+| `eip-unassociated` | Elastic IPs allocated but not associated |
+| `logs-no-retention` | CloudWatch log groups that never expire |
+
+Dollar amounts use an offline us-east-1 list-price table (labelled in every report);
+treat them as estimates. A check that fails (e.g. missing permission) is listed in the
+report and the exit code is 1; it is never silently skipped.
 
 ## Principles
 - **Read-only**: only `Describe*`/`List*`/`Get*` AWS calls, enforced in code, tests and IAM.
