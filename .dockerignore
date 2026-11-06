@@ -1,0 +1,7 @@
+.git
+.venv
+.terraform
+tests
+docs
+*.md
+!README.md
