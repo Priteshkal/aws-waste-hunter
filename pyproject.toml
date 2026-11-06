@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aws-waste-hunter"
-version = "0.0.1"
+version = "0.1.0"
 description = "Read-only, auditable AWS waste scanner with dollar estimates."
 readme = "README.md"
 license = "Apache-2.0"
