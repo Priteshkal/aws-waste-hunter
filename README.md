@@ -3,7 +3,7 @@
 Read-only, auditable AWS waste scanner that tells you **how many dollars** you can save.
 Built by [Helyx IT](https://helyxit.com).
 
-> **Status:** pre-alpha (slice 3). Parallel multi-region and cross-account scans, live pricing, six checks including metric-based idle detection with a hard cost cap.
+> **Status:** alpha (0.1.0). Parallel multi-region and cross-account scans, live pricing, six checks including metric-based idle detection with a hard cost cap.
 
 ## Why this one
 - **It can't change your account.** Every AWS call is `Describe*`, `List*` or `Get*`, enforced
