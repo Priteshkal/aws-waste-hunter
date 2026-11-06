@@ -89,3 +89,30 @@ def test_source_never_calls_mutating_boto_methods() -> None:
 
 def test_allowed_prefixes_are_exactly_read_verbs() -> None:
     assert ALLOWED_OPERATION_PREFIXES == ("Describe", "List", "Get")
+
+
+def test_no_aws_clients_created_outside_the_guarded_helpers() -> None:
+    """Guard-bypass backstop: raw boto3 clients/sessions only in readonly.py."""
+    offenders: list[str] = []
+    for path in SRC.rglob("*.py"):
+        if path.name == "readonly.py":
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                chain = ast.unparse(node.func)
+                if chain.startswith("boto3.") or chain.endswith("._session"):
+                    offenders.append(f"{path.name}:{node.lineno} {chain}")
+            if isinstance(node, ast.ImportFrom) and node.module == "boto3":
+                offenders.append(f"{path.name}:{node.lineno} from boto3 import ...")
+    assert not offenders, offenders
+
+
+@mock_aws
+def test_clients_have_bounded_timeouts_and_validate_region() -> None:
+    from aws_waste_hunter.readonly import client
+
+    c = client(make_session(region_name="us-east-1"), "ec2", "us-east-1")
+    assert c.meta.config.connect_timeout == 5
+    assert c.meta.config.read_timeout == 30
+    with pytest.raises(ValueError):
+        client(make_session(region_name="us-east-1"), "ec2", "evil.example.com")
