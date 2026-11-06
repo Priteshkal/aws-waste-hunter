@@ -39,6 +39,9 @@ OFFLINE_EBS_GB_MONTH: dict[str, float] = {
 }
 OFFLINE_EIP_IDLE_HOURLY = 0.005
 OFFLINE_LOGS_GB_MONTH = 0.03
+# Hourly list prices (us-east-1). Not fetched live: metric-check dollar figures are estimates.
+OFFLINE_NAT_GATEWAY_HOURLY = 0.045
+OFFLINE_LB_HOURLY = 0.0225
 OFFLINE_SOURCE = "offline-us-east-1-list-price"
 
 
@@ -52,6 +55,8 @@ class PriceBook:
     ebs: dict[str, float] = field(default_factory=lambda: dict(OFFLINE_EBS_GB_MONTH))
     eip_idle_hourly: float = OFFLINE_EIP_IDLE_HOURLY
     logs_storage_gb_month: float = OFFLINE_LOGS_GB_MONTH
+    nat_gateway_hourly: float = OFFLINE_NAT_GATEWAY_HOURLY
+    lb_hourly: float = OFFLINE_LB_HOURLY
 
     def ebs_gb_month(self, volume_type: str) -> float:
         return self.ebs.get(volume_type, self.ebs["gp2"])

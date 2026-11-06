@@ -31,7 +31,9 @@ class _Denied:
     id: ClassVar[str] = "denied"
     required_actions: ClassVar[tuple[str, ...]] = ()
 
-    def run(self, session: Any, region: str, prices: PriceBook) -> list[Finding]:
+    def run(
+        self, session: Any, region: str, prices: PriceBook, budget: Any = None
+    ) -> list[Finding]:
         raise ClientError({"Error": {"Code": "AccessDenied", "Message": "nope"}}, "DescribeX")
 
 

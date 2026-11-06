@@ -12,6 +12,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from aws_waste_hunter.accounts import Target
 from aws_waste_hunter.checks import all_checks
 from aws_waste_hunter.checks.base import Check
+from aws_waste_hunter.metrics import DEFAULT_MAX_METRICS, MetricBudget, MetricBudgetExceeded
 from aws_waste_hunter.models import CheckError, ScanResult, ScanSummary
 from aws_waste_hunter.pricing import PriceBook
 from aws_waste_hunter.readonly import client
@@ -23,12 +24,17 @@ def run_scan(
     region: str,
     checks: list[Check] | None = None,
     prices: PriceBook | None = None,
+    max_metrics: int = DEFAULT_MAX_METRICS,
 ) -> ScanResult:
     prices = prices or PriceBook()
     result = ScanResult(region=region, pricing_source=prices.source)
+    budget = MetricBudget(max_metrics)
     for check in checks if checks is not None else all_checks():
         try:
-            result.findings.extend(check.run(session, region, prices))
+            result.findings.extend(check.run(session, region, prices, budget))
+        except MetricBudgetExceeded as exc:
+            result.findings.extend(exc.partial)  # keep what was found before the cap
+            result.errors.append(CheckError(check.id, region, str(exc)))
         except (ClientError, BotoCoreError) as exc:
             result.errors.append(CheckError(check.id, region, str(exc)))
     result.findings.sort(key=lambda f: f.estimated_savings_usd or 0.0, reverse=True)
@@ -51,9 +57,10 @@ def _scan_one(
     region: str,
     prices_for: Callable[[Any, str], PriceBook],
     checks: list[Check] | None,
+    max_metrics: int,
 ) -> ScanResult:
     session = target.session_factory()  # one session per task: boto3 sessions aren't thread-safe
-    result = run_scan(session, region, checks, prices_for(session, region))
+    result = run_scan(session, region, checks, prices_for(session, region), max_metrics)
     acct = target.account_id
     result.account_id = acct
     result.findings = [dataclasses.replace(f, account_id=acct) for f in result.findings]
@@ -66,10 +73,13 @@ def run_multi(
     prices_for: Callable[[Any, str], PriceBook],
     checks: list[Check] | None = None,
     concurrency: int = DEFAULT_CONCURRENCY,
+    max_metrics: int = DEFAULT_MAX_METRICS,
 ) -> ScanSummary:
     """Scan every (account, region) pair in parallel. Result order is deterministic."""
     workers = max(1, min(concurrency, MAX_CONCURRENCY))
     jobs = [(t, region) for t in targets for region in t.regions]
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        results = list(pool.map(lambda j: _scan_one(j[0], j[1], prices_for, checks), jobs))
+        results = list(
+            pool.map(lambda j: _scan_one(j[0], j[1], prices_for, checks, max_metrics), jobs)
+        )
     return ScanSummary(results=results)

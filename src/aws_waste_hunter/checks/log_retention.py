@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from aws_waste_hunter.metrics import MetricBudget
 from aws_waste_hunter.models import Finding
 from aws_waste_hunter.pricing import PriceBook
 from aws_waste_hunter.readonly import client
@@ -15,7 +16,13 @@ class LogGroupsWithoutRetention:
     id: ClassVar[str] = "logs-no-retention"
     required_actions: ClassVar[tuple[str, ...]] = ("logs:DescribeLogGroups",)
 
-    def run(self, session: Any, region: str, prices: PriceBook) -> list[Finding]:
+    def run(
+        self,
+        session: Any,
+        region: str,
+        prices: PriceBook,
+        budget: MetricBudget | None = None,
+    ) -> list[Finding]:
         logs = client(session, "logs", region)
         findings: list[Finding] = []
         for page in logs.get_paginator("describe_log_groups").paginate():
