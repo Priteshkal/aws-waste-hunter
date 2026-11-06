@@ -1,0 +1,31 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AwsWasteHunterReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeVolumes",
+        "ec2:DescribeSnapshots",
+        "ec2:DescribeImages",
+        "ec2:DescribeAddresses",
+        "ec2:DescribeInstances",
+        "ec2:DescribeNatGateways",
+        "ec2:DescribeRegions",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "logs:DescribeLogGroups",
+        "s3:ListAllMyBuckets",
+        "s3:GetLifecycleConfiguration",
+        "s3:ListBucketMultipartUploads",
+        "ecr:DescribeRepositories",
+        "ecr:DescribeImages",
+        "ecr:GetLifecyclePolicy",
+        "pricing:GetProducts",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
