@@ -21,6 +21,7 @@ class Finding:
     # None when savings cannot be estimated without more data (e.g. log retention).
     estimated_savings_usd: float | None
     confidence: Confidence
+    account_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -30,12 +31,14 @@ class CheckError:
     check_id: str
     region: str
     message: str
+    account_id: str = ""
 
 
 @dataclass
 class ScanResult:
     region: str
     pricing_source: str
+    account_id: str = ""
     findings: list[Finding] = field(default_factory=list)
     errors: list[CheckError] = field(default_factory=list)
 
@@ -52,7 +55,11 @@ class ScanSummary:
 
     @property
     def regions(self) -> list[str]:
-        return [r.region for r in self.results]
+        return list(dict.fromkeys(r.region for r in self.results))
+
+    @property
+    def accounts(self) -> list[str]:
+        return list(dict.fromkeys(r.account_id for r in self.results if r.account_id))
 
     @property
     def findings(self) -> list[Finding]:
