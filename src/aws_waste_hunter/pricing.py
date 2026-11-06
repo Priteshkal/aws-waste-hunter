@@ -118,9 +118,10 @@ def fetch_live(pricing: Any, region: str) -> PriceBook:
             ebs[vtype] = price
         else:
             fallbacks.append(f"ebs-{vtype}")
+    # Public IPv4 pricing lives in the AmazonVPC service (verified against the live API).
     eip = _pick(
-        _products(pricing, "AmazonEC2", {"productFamily": "IP Address", "regionCode": region}),
-        "ElasticIP:IdleAddress",
+        _products(pricing, "AmazonVPC", {"group": "VPCPublicIPv4Address", "regionCode": region}),
+        "PublicIPv4:IdleAddress",
     )
     if eip is None or not _sane(eip, OFFLINE_EIP_IDLE_HOURLY):
         eip = OFFLINE_EIP_IDLE_HOURLY

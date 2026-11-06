@@ -50,10 +50,11 @@ class FakePricing:
         if "volumeApiName" in f:
             usd = self.ebs.get(f["volumeApiName"])
             return [{"PriceList": [_product("EBS:VolumeUsage", usd)] if usd else []}]
-        if f.get("productFamily") == "IP Address":
-            items = [_product("DataTransfer", 9.9)]
+        if ServiceCode == "AmazonVPC":
+            assert f["group"] == "VPCPublicIPv4Address"
+            items = [_product("EUW1-PublicIPv4:InUseAddress", 9.9)]
             if self.eip:
-                items.append(_product("EUW1-ElasticIP:IdleAddress", self.eip))
+                items.append(_product("EUW1-PublicIPv4:IdleAddress", self.eip))
             return [{"PriceList": items}]
         items = [] if self.logs is None else [_product("TimedStorage-ByteHrs", self.logs)]
         return [{"PriceList": items}]
