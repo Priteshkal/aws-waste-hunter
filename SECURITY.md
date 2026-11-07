@@ -11,7 +11,7 @@
 - **Untrusted data.** Resource names and tag values are treated as untrusted input.
 
 ## Reporting a vulnerability
-Email **support@helyxit.com** with the subject "aws-waste-hunter security". Please do not open
+Email **pritesh@helyxit.com** with the subject "aws-waste-hunter security". Please do not open
 a public issue. We aim to acknowledge within 3 business days.
 
 ## Supported versions
